@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>一期混凝剂配药计算系统</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;padding:20px}
+h1{text-align:center}
+.card{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.section-title{background:#2e7d32;color:#fff;padding:10px;border-radius:4px;margin:15px 0;font-weight:bold}
+.row{display:flex;align-items:center;margin-bottom:10px}
+.row label{width:240px}
+.row input{width:180px;padding:6px}
+.unit{margin-left:6px;color:#555}
+.result input{background:#eee}
+.status{margin-top:15px;padding:10px;font-weight:bold;border-radius:4px}
+.ok{background:#e8f5e9;color:#2e7d32}
+.error{background:#ffebee;color:#c62828}
+</style>
+</head>
+<body>
+
+<h1>一期混凝剂配药计算系统</h1>
+
+<div class="card">
+
+<div class="section-title">输入参数</div>
+
+<div class="row"><label>配药量</label><input type="number" id="ton" step="0.01"><span class="unit">吨</span></div>
+<div class="row"><label>目标配置浓度</label><input type="number" id="targetConc" step="0.01"><span class="unit">%</span></div>
+<div class="row"><label>原液浓度</label><input type="number" id="stockConc" value="100" step="0.01"><span class="unit">%</span></div>
+
+<div class="section-title">计算结果</div>
+
+<div class="row result"><label>药剂总质量</label><input readonly id="mass"><span class="unit">kg</span></div>
+<div class="row result"><label>溶解池药液体积（2池合计）</label><input readonly id="dissolveVol"><span class="unit">m³</span></div>
+<div class="row result"><label>溶解池液位高度</label><input readonly id="dissolveHeight"><span class="unit">m（≤2.5）</span></div>
+<div class="row result"><label>溶液池需补加水量</label><input readonly id="addWater"><span class="unit">m³</span></div>
+<div class="row result"><label>溶液池最终液位</label><input readonly id="solutionHeight"><span class="unit">m（≤3.2）</span></div>
+
+<div id="status" class="status ok">请输入参数</div>
+
+</div>
+
+<script>
+function calc(){
+const ton=parseFloat(document.getElementById("ton").value);
+const targetConc=parseFloat(document.getElementById("targetConc").value)/100;
+const stockConc=parseFloat(document.getElementById("stockConc").value)/100;
+const status=document.getElementById("status");
+
+if(!ton||!targetConc||!stockConc){
+status.textContent="参数未填写完整";
+status.className="status error";
+return;
+}
+
+const dissolveArea=8;
+const dissolveMaxHeight=2.5;
+const dissolveMaxVol=20;
+const solutionArea=6.1*6.1;
+const solutionMaxHeight=3.2;
+
+const mass=ton*1000*targetConc;
+const dissolveVol=mass/(stockConc*1000);
+const dissolveHeight=dissolveVol/dissolveArea;
+
+if(dissolveVol>dissolveMaxVol||dissolveHeight>dissolveMaxHeight){
+status.textContent="溶解池溢流，配药量过大";
+status.className="status error";
+return;
+}
+
+const finalVol=mass/(targetConc*1000);
+const addWater=finalVol-dissolveVol;
+
+if(addWater<0){
+status.textContent="溶解池浓度过低，无法满足目标浓度";
+status.className="status error";
+return;
+}
+
+const solutionHeight=finalVol/solutionArea;
+if(solutionHeight>solutionMaxHeight){
+status.textContent="溶液池溢流，体积超限";
+status.className="status error";
+return;
+}
+
+document.getElementById("mass").value=mass.toFixed(2);
+document.getElementById("dissolveVol").value=dissolveVol.toFixed(2);
+document.getElementById("dissolveHeight").value=dissolveHeight.toFixed(2);
+document.getElementById("addWater").value=addWater.toFixed(2);
+document.getElementById("solutionHeight").value=solutionHeight.toFixed(2);
+
+status.textContent="计算正常";
+status.className="status ok";
+}
+
+document.querySelectorAll("input").forEach(i=>i.addEventListener("input",calc));
+</script>
+
+</body>
+</html>
