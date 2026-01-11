@@ -1,42 +1,173 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>一期助凝剂（益维净）配药系统</title>
+<title>一期配药计算系统（混凝剂+助凝剂）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;padding:20px}
-h1{font-size:22px}
-.box{background:#fff;padding:16px;margin-bottom:16px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-label{display:block;margin-top:10px}
-input{width:100%;padding:10px;font-size:18px;margin-top:4px}
-button{margin-top:16px;width:100%;padding:12px;font-size:18px;background:#1677ff;color:#fff;border:none;border-radius:6px}
-.result{margin-top:12px;font-size:16px;line-height:1.7}
-.formula{background:#f0f2f5;padding:10px;border-radius:6px;margin-top:6px;font-size:14px}
-.warn{color:#d4380d;font-weight:bold}
-.ok{color:#389e0d;font-weight:bold}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f7fa;
+  margin:0;
+  padding:20px;
+}
+h1{
+  font-size:24px;
+  text-align:center;
+  color:#1677ff;
+  margin-bottom:24px;
+}
+h2{
+  font-size:20px;
+  color:#333;
+  margin-bottom:12px;
+  border-left:4px solid #1677ff;
+  padding-left:12px;
+}
+.container{
+  max-width:1200px;
+  margin:0 auto;
+}
+.systems{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  margin-bottom:20px;
+}
+@media(max-width:768px){
+  .systems{
+    grid-template-columns:1fr;
+  }
+}
+.system{
+  background:#fff;
+  padding:20px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.box{
+  background:#fff;
+  padding:16px;
+  margin-bottom:16px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+label{
+  display:block;
+  margin-top:10px;
+  font-weight:500;
+  color:#333;
+}
+input{
+  width:100%;
+  padding:10px;
+  font-size:18px;
+  margin-top:4px;
+  border:1px solid #d9d9d9;
+  border-radius:4px;
+  box-sizing:border-box;
+}
+input:focus{
+  outline:none;
+  border-color:#1677ff;
+}
+button{
+  margin-top:16px;
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  background:#1677ff;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background 0.3s;
+}
+button:hover{
+  background:#0958d9;
+}
+button:active{
+  background:#003eb3;
+}
+.result{
+  margin-top:12px;
+  font-size:16px;
+  line-height:1.7;
+}
+.formula{
+  background:#f0f2f5;
+  padding:10px;
+  border-radius:6px;
+  margin-top:6px;
+  font-size:14px;
+  color:#595959;
+}
+.warn{
+  color:#d4380d;
+  font-weight:bold;
+}
+.ok{
+  color:#389e0d;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<h1>一期助凝剂（益维净）配药计算系统</h1>
+<div class="container">
+  <h1>一期配药计算系统</h1>
 
-<div class="box">
-<label>计量桶液位高度 H（m）</label>
-<input id="h" type="number" step="0.01" value="1">
+  <div class="systems">
+    <!-- 混凝剂系统 -->
+    <div class="system">
+      <h2>混凝剂系统</h2>
 
-<label>目标配置浓度（%）</label>
-<input id="c" type="number" step="0.1" value="5">
+```
+  <div class="box">
+    <label>固体药剂投加量（吨）</label>
+    <input id="m_coag" type="number" step="0.01">
 
-<button onclick="calc()">计算</button>
+    <label>目标配置浓度（%）</label>
+    <input id="c_coag" type="number" step="0.01">
+
+    <button onclick="calcCoag()">计算</button>
+  </div>
+
+  <div class="box result" id="out_coag"></div>
 </div>
 
-<div class="box result" id="out"></div>
+<!-- 助凝剂系统（益维净） -->
+<div class="system">
+  <h2>助凝剂系统（益维净）</h2>
+  
+  <div class="box">
+    <label>计量桶液位高度 H（m）</label>
+    <input id="h_aid" type="number" step="0.01" value="1">
+
+    <label>目标配置浓度（%）</label>
+    <input id="c_aid" type="number" step="0.1" value="5">
+
+    <button onclick="calcAid()">计算</button>
+  </div>
+
+  <div class="box result" id="out_aid"></div>
+</div>
+```
+
+  </div>
+</div>
 
 <script>
-function calc(){
-  const H = parseFloat(document.getElementById('h').value);
-  const C = parseFloat(document.getElementById('c').value);
+// ========== 助凝剂（益维净）计算函数 ==========
+function calcAid(){
+  const H = parseFloat(document.getElementById('h_aid').value);
+  const C = parseFloat(document.getElementById('c_aid').value);
+
+  if(isNaN(H)||isNaN(C)||H<=0||C<=0){
+    document.getElementById('out_aid').innerHTML='<span class="warn">请输入有效数值</span>';
+    return;
+  }
 
   const r = 0.66;
   const density = 1380; // kg/m3
@@ -73,7 +204,51 @@ function calc(){
     html += `<span class="ok">✓ 溶液池液位 ${H_add_raw.toFixed(2)} m，安全</span>`;
   }
 
-  document.getElementById('out').innerHTML = html;
+  document.getElementById('out_aid').innerHTML = html;
+}
+
+// ========== 混凝剂计算函数 ==========
+function calcCoag(){
+  const M = parseFloat(document.getElementById('m_coag').value);
+  const C = parseFloat(document.getElementById('c_coag').value)/100;
+
+  if(isNaN(M)||isNaN(C)||C<=0||M<=0){
+    document.getElementById('out_coag').innerHTML='<span class="warn">请输入有效数值</span>';
+    return;
+  }
+
+  const V_need = M / C;
+  const V_diss_max = 20;
+  const A_diss = 8;
+  const A_sol = 37.21;
+
+  let html = "";
+
+  if(V_need <= V_diss_max){
+    const H = V_need / A_diss;
+    html += "<div class='ok'>工况一：仅使用溶解池即可满足目标浓度</div>";
+    html += "所需总体积：" + V_need.toFixed(2) + " m³<br>";
+    html += "溶解池液位高度：" + H.toFixed(2) + " m（≤2.5 m）<br>";
+    html += "无需启用溶液池补水";
+  }else{
+    const V_add = V_need - V_diss_max;
+    const H_add = V_add / A_sol;
+    const H_final = V_need / A_sol;
+
+    html += "<div class='warn'>工况二：溶解池加满仍超浓，需要溶液池补水</div>";
+    html += "溶解池体积：20.00 m³（液位 2.5 m）<br>";
+    html += "最终所需总体积：" + V_need.toFixed(2) + " m³<br>";
+    html += "溶液池需补水体积：" + V_add.toFixed(2) + " m³<br>";
+    html += "折算补水高度：" + H_add.toFixed(2) + " m<br>";
+
+    if(H_final > 3.2){
+      html += "<span class='warn'>⚠ 溶液池最终液位 " + H_final.toFixed(2) + " m ＞ 3.2 m，发生溢流</span>";
+    }else{
+      html += "<span class='ok'>溶液池最终液位：" + H_final.toFixed(2) + " m（安全）</span>";
+    }
+  }
+
+  document.getElementById('out_coag').innerHTML = html;
 }
 </script>
 
