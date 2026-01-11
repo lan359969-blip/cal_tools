@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>一期助凝剂（益维净）配药系统-工程交付版</title>
+<title>一期助凝剂（益维净）配药系统-工程交付严谨版</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;padding:20px}
@@ -19,7 +19,7 @@ button{margin-top:16px;width:100%;padding:12px;font-size:18px;background:#1677ff
 </head>
 <body>
 
-<h1>一期助凝剂（益维净）配药计算系统（工程交付版）</h1>
+<h1>一期助凝剂（益维净）配药计算系统（工程严谨交付版）</h1>
 
 <div class="box">
 <label>计量桶液位高度 H（m）</label>
@@ -39,37 +39,37 @@ function calc(){
   const C = parseFloat(document.getElementById('c').value);
 
   const r = 0.66;
-  const density = 1.38 * 1000;
+  const density = 1380; // kg/m3
   const poolArea = 6.8 * 4;
   const poolMaxH = 3.0;
 
-  const V_drug = Math.PI * r * r * H;
-  const M_drug = V_drug * density;
+  // === 严谨工程算法：中间量不取整 ===
+  const V_drug_raw = Math.PI * r * r * H;          // 原始体积
+  const M_drug_raw = V_drug_raw * density;         // 原始质量
 
-  const M_total = M_drug / (C/100);
-  const V_total = M_total / 1000;
+  const M_total_raw = M_drug_raw / (C / 100);      // 目标总质量
+  const V_total_raw = M_total_raw / 1000;          // 目标总体积
 
-  const V_add = V_total - V_drug;
-  const H_add = V_add / poolArea;
-  const H_final = H_add;
+  const V_add_raw = V_total_raw - V_drug_raw;      // 需补水体积
+  const H_add_raw = V_add_raw / poolArea;           // 折算补水高度
 
   let html = "";
-  html += `计量桶原液体积：${V_drug.toFixed(2)} m³<br>`;
-  html += `计量桶原液质量：${M_drug.toFixed(2)} kg<br><br>`;
+  html += `计量桶原液体积：${V_drug_raw.toFixed(2)} m³<br>`;
+  html += `计量桶原液质量：${M_drug_raw.toFixed(2)} kg<br><br>`;
 
-  html += `目标所需总体积：${V_total.toFixed(2)} m³<br>`;
-  html += `<div class="formula">公式：V总 = 原液质量 ÷ 目标浓度 ÷ 1000</div><br>`;
+  html += `目标所需总体积：${V_total_raw.toFixed(2)} m³<br>`;
+  html += `<div class="formula">公式：V总 = (原液质量 ÷ 目标浓度) ÷ 1000</div><br>`;
 
-  html += `溶液池需补水体积：${V_add.toFixed(2)} m³<br>`;
+  html += `溶液池需补水体积：${V_add_raw.toFixed(2)} m³<br>`;
   html += `<div class="formula">公式：V补水 = V总 − 原液体积</div><br>`;
 
-  html += `折算补水高度：${H_add.toFixed(2)} m<br>`;
+  html += `折算补水高度：${H_add_raw.toFixed(2)} m<br>`;
   html += `<div class="formula">公式：H补水 = V补水 ÷ 溶液池面积</div><br>`;
 
-  if(H_final > poolMaxH){
-    html += `<span class="warn">⚠ 溶液池最终液位 ${H_final.toFixed(2)} m ＞ ${poolMaxH} m，发生溢流</span>`;
+  if(H_add_raw > poolMaxH){
+    html += `<span class="warn">⚠ 溶液池最终液位 ${H_add_raw.toFixed(2)} m ＞ ${poolMaxH} m，发生溢流</span>`;
   }else{
-    html += `<span class="ok">✓ 溶液池液位 ${H_final.toFixed(2)} m，安全</span>`;
+    html += `<span class="ok">✓ 溶液池液位 ${H_add_raw.toFixed(2)} m，安全</span>`;
   }
 
   document.getElementById('out').innerHTML = html;
