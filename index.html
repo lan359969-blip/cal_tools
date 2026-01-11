@@ -1,80 +1,185 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>一期混凝剂配药系统</title>
+<title>一期药剂配药系统（混凝剂 + 助凝剂）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;padding:20px}
-h1{font-size:22px}
-.box{background:#fff;padding:16px;margin-bottom:16px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-label{display:block;margin-top:10px}
-input{width:100%;padding:10px;font-size:18px;margin-top:4px}
-button{margin-top:16px;width:100%;padding:12px;font-size:18px;background:#1677ff;color:#fff;border:none;border-radius:6px}
-.result{margin-top:12px;font-size:16px;line-height:1.6}
-.warn{color:#d4380d;font-weight:bold}
-.ok{color:#389e0d;font-weight:bold}
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f5f7fa;
+    margin:0;
+    padding:16px;
+}
+h1{
+    font-size:22px;
+    margin-bottom:12px;
+}
+h2{
+    font-size:20px;
+    margin-top:28px;
+}
+.box{
+    background:#ffffff;
+    padding:16px;
+    margin-bottom:16px;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+label{
+    display:block;
+    margin-top:10px;
+    font-size:15px;
+}
+input{
+    width:100%;
+    padding:10px;
+    font-size:18px;
+    margin-top:4px;
+    box-sizing:border-box;
+}
+button{
+    margin-top:16px;
+    width:100%;
+    padding:12px;
+    font-size:18px;
+    background:#1677ff;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+}
+.result{
+    margin-top:12px;
+    font-size:16px;
+    line-height:1.7;
+}
+.warn{
+    color:#d4380d;
+    font-weight:bold;
+}
+.ok{
+    color:#389e0d;
+    font-weight:bold;
+}
+hr{
+    margin:30px 0;
+}
 </style>
 </head>
+
 <body>
 
-<h1>一期混凝剂配药计算</h1>
+<h1>一期药剂配药计算系统</h1>
+
+<!-- ================= 一期混凝剂 ================= -->
+<h2>一、一期混凝剂配药</h2>
 
 <div class="box">
-  <label>固体药剂投加量（吨）</label>
-  <input id="m" type="number" step="0.01">
+    <label>配药药量（吨）</label>
+    <input id="mix_mass" type="number" step="0.01">
 
-  <label>目标配置浓度（%）</label>
-  <input id="c" type="number" step="0.01">
+    <label>目标配置浓度（%）</label>
+    <input id="mix_target" type="number" step="0.01">
 
-  <button onclick="calc()">计算</button>
+    <button onclick="calcMix()">计算</button>
+
+    <div id="mix_result" class="result"></div>
 </div>
 
-<div class="box result" id="out"></div>
+<!-- ================= 一期助凝剂 ================= -->
+<hr>
+
+<h2>二、一期助凝剂（益维净）配药</h2>
+
+<div class="box">
+    <label>目标配置浓度（%）（2%～10%）</label>
+    <input id="aid_target" type="number" step="0.01">
+
+    <label>计量桶液位高度（米）</label>
+    <input id="aid_meter_h" type="number" step="0.01">
+
+    <button onclick="calcAid()">计算</button>
+
+    <div id="aid_result" class="result"></div>
+</div>
 
 <script>
-function calc(){
-  const M = parseFloat(document.getElementById('m').value);
-  const C = parseFloat(document.getElementById('c').value)/100;
+/* =========================
+   一期混凝剂计算逻辑
+   ========================= */
+function calcMix(){
+    const mass = parseFloat(document.getElementById("mix_mass").value);
+    const target = parseFloat(document.getElementById("mix_target").value);
 
-  if(isNaN(M)||isNaN(C)||C<=0){
-    out.innerHTML='<span class="warn">请输入有效数值</span>';
-    return;
-  }
-
-  const V_need = M / C;
-  const V_diss_max = 20;
-  const A_diss = 8;
-  const A_sol = 37.21;
-
-  let html = "";
-
-  if(V_need <= V_diss_max){
-    const H = V_need / A_diss;
-    html += "<div class='ok'>工况一：仅使用溶解池即可满足目标浓度</div>";
-    html += "所需总体积：" + V_need.toFixed(2) + " m³<br>";
-    html += "溶解池液位高度：" + H.toFixed(2) + " m（≤2.5 m）<br>";
-    html += "无需启用溶液池补水";
-  }else{
-    const V_add = V_need - V_diss_max;
-    const H_add = V_add / A_sol;
-    const H_final = V_need / A_sol;
-
-    html += "<div class='warn'>工况二：溶解池加满仍超浓，需要溶液池补水</div>";
-    html += "溶解池体积：20.00 m³（液位 2.5 m）<br>";
-    html += "最终所需总体积：" + V_need.toFixed(2) + " m³<br>";
-    html += "溶液池需补水体积：" + V_add.toFixed(2) + " m³<br>";
-    html += "折算补水高度：" + H_add.toFixed(2) + " m<br>";
-
-    if(H_final > 3.2){
-      html += "<span class='warn'>⚠ 溶液池最终液位 " + H_final.toFixed(2) + " m ＞ 3.2 m，发生溢流</span>";
-    }else{
-      html += "<span class='ok'>溶液池最终液位：" + H_final.toFixed(2) + " m（安全）</span>";
+    if(isNaN(mass) || isNaN(target) || target <= 0){
+        document.getElementById("mix_result").innerHTML =
+            "<span class='warn'>请输入有效参数</span>";
+        return;
     }
-  }
 
-  out.innerHTML = html;
+    // 参数
+    const poolArea = 2 * 2;      // 单个溶解池底面积 m²
+    const maxH = 2.5;            // 最大液位 m
+    const poolCount = 2;
+
+    // 固体药剂密度 = 1 t/m³
+    const drugVolume = mass;     // m³
+
+    // 目标溶液总体积
+    const totalVolume = mass / (target / 100);
+
+    // 每个溶解池目标体积
+    const perPoolVol = totalVolume / poolCount;
+    const perPoolH = perPoolVol / poolArea;
+
+    let html = "";
+
+    if(perPoolH <= maxH){
+        html += "<span class='ok'>溶解池内即可完成配置</span><br>";
+        html += "单池液位高度：" + perPoolH.toFixed(2) + " m<br>";
+        html += "无需向溶液池补水";
+    }else{
+        const maxPoolVol = poolArea * maxH * poolCount;
+        const needAddWater = totalVolume - maxPoolVol;
+
+        html += "<span class='warn'>溶解池浓度超标，需要向溶液池补水</span><br>";
+        html += "溶解池满液位高度：2.50 m<br>";
+        html += "输送至溶液池后需补水体积：" + needAddWater.toFixed(2) + " m³";
+    }
+
+    document.getElementById("mix_result").innerHTML = html;
+}
+
+/* =========================
+   一期助凝剂（益维净）
+   ========================= */
+function calcAid(){
+    const target = parseFloat(document.getElementById("aid_target").value);
+    const h = parseFloat(document.getElementById("aid_meter_h").value);
+
+    if(isNaN(target) || isNaN(h) || target <= 0){
+        document.getElementById("aid_result").innerHTML =
+            "<span class='warn'>请输入有效参数</span>";
+        return;
+    }
+
+    // 参数
+    const density = 1.38; // kg/L
+    const r = 0.66;
+    const meterArea = Math.PI * r * r;
+
+    const meterVol = meterArea * h; // m³
+    const drugMass = meterVol * density; // t
+
+    const totalVol = drugMass / (target / 100);
+    const addWater = totalVol - meterVol;
+
+    let html = "";
+    html += "计量桶原液体积：" + meterVol.toFixed(2) + " m³<br>";
+    html += "原液质量：" + drugMass.toFixed(2) + " t<br>";
+    html += "配置至 " + target + "% 需补水：" + addWater.toFixed(2) + " m³";
+
+    document.getElementById("aid_result").innerHTML = html;
 }
 </script>
 
