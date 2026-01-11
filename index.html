@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>一期助凝剂（益维净）配药系统-工程交付严谨版</title>
+<title>一期助凝剂（益维净）配药系统</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;padding:20px}
@@ -44,7 +44,8 @@ function calc(){
   const poolMaxH = 3.0;
 
   // === 严谨工程算法：中间量不取整 ===
-  const V_drug_raw = Math.PI * r * r * H;          // 原始体积
+  const PI = 3.14;
+  const V_drug_raw = PI * r * r * H;          // 原始体积
   const M_drug_raw = V_drug_raw * density;         // 原始质量
 
   const M_total_raw = M_drug_raw / (C / 100);      // 目标总质量
