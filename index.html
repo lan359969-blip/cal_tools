@@ -54,7 +54,7 @@ function calc(){
   const H_sol_max = 3.0;
 
   const V_raw = Math.PI * r * r * H;
-  const M_raw = V_raw * rho;
+  const M_raw = V_raw * rho * 1000;
 
   const V_need = M_raw / C;
   const V_water = V_need - V_raw;
