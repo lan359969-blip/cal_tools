@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>一期助凝剂（益维净）配药系统</title>
+<title>一期助凝剂（益维净）配药系统-工程交付版</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;padding:20px}
@@ -13,22 +12,23 @@ label{display:block;margin-top:10px}
 input{width:100%;padding:10px;font-size:18px;margin-top:4px}
 button{margin-top:16px;width:100%;padding:12px;font-size:18px;background:#1677ff;color:#fff;border:none;border-radius:6px}
 .result{margin-top:12px;font-size:16px;line-height:1.7}
+.formula{background:#f0f2f5;padding:10px;border-radius:6px;margin-top:6px;font-size:14px}
 .warn{color:#d4380d;font-weight:bold}
 .ok{color:#389e0d;font-weight:bold}
 </style>
 </head>
 <body>
 
-<h1>一期助凝剂（益维净）配药计算系统</h1>
+<h1>一期助凝剂（益维净）配药计算系统（工程交付版）</h1>
 
 <div class="box">
-  <label>计量桶液位高度 H（m）</label>
-  <input id="h" type="number" step="0.01" placeholder="0 ~ 2.0">
+<label>计量桶液位高度 H（m）</label>
+<input id="h" type="number" step="0.01" value="1">
 
-  <label>目标配置浓度（%）</label>
-  <input id="c" type="number" step="0.1" placeholder="2 ~ 10">
+<label>目标配置浓度（%）</label>
+<input id="c" type="number" step="0.1" value="5">
 
-  <button onclick="calc()">计算</button>
+<button onclick="calc()">计算</button>
 </div>
 
 <div class="box result" id="out"></div>
@@ -36,45 +36,43 @@ button{margin-top:16px;width:100%;padding:12px;font-size:18px;background:#1677ff
 <script>
 function calc(){
   const H = parseFloat(document.getElementById('h').value);
-  const C = parseFloat(document.getElementById('c').value)/100;
-
-  if(isNaN(H)||isNaN(C)||H<=0||C<=0){
-    out.innerHTML='<span class="warn">请输入有效参数</span>';
-    return;
-  }
-
-  if(H>2.0){
-    out.innerHTML='<span class="warn">计量桶液位超过 2.0 m</span>';
-    return;
-  }
+  const C = parseFloat(document.getElementById('c').value);
 
   const r = 0.66;
-  const rho = 1.38;
-  const A_sol = 6.8 * 4.0;
-  const H_sol_max = 3.0;
+  const density = 1.38 * 1000;
+  const poolArea = 6.8 * 4;
+  const poolMaxH = 3.0;
 
-  const V_raw = Math.PI * r * r * H;
-  const M_raw = V_raw * rho * 1000;
+  const V_drug = Math.PI * r * r * H;
+  const M_drug = V_drug * density;
 
-  const V_need = M_raw / C;
-  const V_water = V_need - V_raw;
-  const H_water = V_water / A_sol;
-  const H_final = V_need / A_sol;
+  const M_total = M_drug / (C/100);
+  const V_total = M_total / 1000;
+
+  const V_add = V_total - V_drug;
+  const H_add = V_add / poolArea;
+  const H_final = H_add;
 
   let html = "";
-  html += "计量桶原液体积：" + V_raw.toFixed(2) + " m³<br>";
-  html += "计量桶原液质量：" + M_raw.toFixed(2) + " kg<br>";
-  html += "目标所需总体积：" + V_need.toFixed(2) + " m³<br>";
-  html += "溶液池需补水体积：" + V_water.toFixed(2) + " m³<br>";
-  html += "折算补水高度：" + H_water.toFixed(2) + " m<br>";
+  html += `计量桶原液体积：${V_drug.toFixed(2)} m³<br>`;
+  html += `计量桶原液质量：${M_drug.toFixed(2)} kg<br><br>`;
 
-  if(H_final > H_sol_max){
-    html += "<span class='warn'>⚠ 溶液池最终液位 " + H_final.toFixed(2) + " m ＞ 3.0 m，发生溢流</span>";
+  html += `目标所需总体积：${V_total.toFixed(2)} m³<br>`;
+  html += `<div class="formula">公式：V总 = 原液质量 ÷ 目标浓度 ÷ 1000</div><br>`;
+
+  html += `溶液池需补水体积：${V_add.toFixed(2)} m³<br>`;
+  html += `<div class="formula">公式：V补水 = V总 − 原液体积</div><br>`;
+
+  html += `折算补水高度：${H_add.toFixed(2)} m<br>`;
+  html += `<div class="formula">公式：H补水 = V补水 ÷ 溶液池面积</div><br>`;
+
+  if(H_final > poolMaxH){
+    html += `<span class="warn">⚠ 溶液池最终液位 ${H_final.toFixed(2)} m ＞ ${poolMaxH} m，发生溢流</span>`;
   }else{
-    html += "<span class='ok'>溶液池最终液位：" + H_final.toFixed(2) + " m（安全）</span>";
+    html += `<span class="ok">✓ 溶液池液位 ${H_final.toFixed(2)} m，安全</span>`;
   }
 
-  out.innerHTML = html;
+  document.getElementById('out').innerHTML = html;
 }
 </script>
 
